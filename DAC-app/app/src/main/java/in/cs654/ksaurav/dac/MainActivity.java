@@ -15,6 +15,16 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends Activity implements OnClickListener {
 
@@ -24,7 +34,12 @@ public class MainActivity extends Activity implements OnClickListener {
     private static Button btnZero, btnOne, btnTwo, btnThree, btnFour;
     private static Button btnFive, btnSix, btnSeven, btnEight, btnNine;
     private static Button btnBackSpace, btnClear, btnEquals, btnDecimal;
-    private static String EMPTY = "";
+    public static final String EMPTY = "";
+    public static final String DAC_API_URL = "http://172.24.1.62/dac-server/api.php";
+    public static final String BAD_INPUT_MSG = "Bad Input";
+    public static final String NETWORK_ERROR_MSG = "Network Error";
+    public static final String UTF8 = "utf-8";
+    public static final String REQ_KEY = "input";
 
     /**
      * @param savedInstanceState saved instance state
@@ -46,10 +61,10 @@ public class MainActivity extends Activity implements OnClickListener {
      * Helper function to set on-click listeners to all the buttons
      */
     private void setListenersOnButton() {
-        Button[] buttons = new Button[] {btnAdd, btnSubtract, btnMultiply, btnDivide, btnZero,
+        final Button[] buttons = new Button[] {btnAdd, btnSubtract, btnMultiply, btnDivide, btnZero,
                 btnOne, btnTwo, btnThree, btnFour, btnFive, btnSix, btnSeven, btnEight, btnNine,
                 btnBackSpace, btnClear, btnEquals, btnDecimal};
-        for (Button button : buttons) {
+        for (final Button button : buttons) {
             button.setOnClickListener(this);
         }
     }
@@ -58,24 +73,24 @@ public class MainActivity extends Activity implements OnClickListener {
      * Helper function to link the UI entities with corresponding objects
      */
     private void initializeButtons() {
-        btnAdd       = (Button)   findViewById(R.id.btnAdd);
-        btnSubtract  = (Button)   findViewById(R.id.btnSubtract);
-        btnMultiply  = (Button)   findViewById(R.id.btnMultiply);
-        btnDivide    = (Button)   findViewById(R.id.btnDivide);
-        btnBackSpace = (Button)   findViewById(R.id.btnBackSpace);
-        btnClear     = (Button)   findViewById(R.id.btnClear);
-        btnEquals    = (Button)   findViewById(R.id.btnEquals);
-        btnDecimal   = (Button)   findViewById(R.id.btnDecimal);
-        btnZero      = (Button)   findViewById(R.id.btnZero);
-        btnOne       = (Button)   findViewById(R.id.btnOne);
-        btnTwo       = (Button)   findViewById(R.id.btnTwo);
-        btnThree     = (Button)   findViewById(R.id.btnThree);
-        btnFour      = (Button)   findViewById(R.id.btnFour);
-        btnFive      = (Button)   findViewById(R.id.btnFive);
-        btnSix       = (Button)   findViewById(R.id.btnSix);
-        btnSeven     = (Button)   findViewById(R.id.btnSeven);
-        btnEight     = (Button)   findViewById(R.id.btnEight);
-        btnNine      = (Button)   findViewById(R.id.btnNine);
+        btnAdd       = (Button) findViewById(R.id.btnAdd);
+        btnSubtract  = (Button) findViewById(R.id.btnSubtract);
+        btnMultiply  = (Button) findViewById(R.id.btnMultiply);
+        btnDivide    = (Button) findViewById(R.id.btnDivide);
+        btnBackSpace = (Button) findViewById(R.id.btnBackSpace);
+        btnClear     = (Button) findViewById(R.id.btnClear);
+        btnEquals    = (Button) findViewById(R.id.btnEquals);
+        btnDecimal   = (Button) findViewById(R.id.btnDecimal);
+        btnZero      = (Button) findViewById(R.id.btnZero);
+        btnOne       = (Button) findViewById(R.id.btnOne);
+        btnTwo       = (Button) findViewById(R.id.btnTwo);
+        btnThree     = (Button) findViewById(R.id.btnThree);
+        btnFour      = (Button) findViewById(R.id.btnFour);
+        btnFive      = (Button) findViewById(R.id.btnFive);
+        btnSix       = (Button) findViewById(R.id.btnSix);
+        btnSeven     = (Button) findViewById(R.id.btnSeven);
+        btnEight     = (Button) findViewById(R.id.btnEight);
+        btnNine      = (Button) findViewById(R.id.btnNine);
     }
 
     /**
@@ -158,10 +173,46 @@ public class MainActivity extends Activity implements OnClickListener {
 
             // In case of equal, send input for evaluation
             case R.id.btnEquals:
-                // TODO all actions come here
-                tvResult.setText("42");
+                final String inputString = input.toString().replace('×','*').replace('÷', '/');
+                processRequest(inputString);
                 break;
         }
         tvInput.setText(input);
+    }
+
+    /**
+     * @param inputString request string to be sent to DAC API for evaluation
+     * This function posts the payload string for evaluation and receives the result and sets it in
+     * the result textview.
+     * It uses Volley for faster and efficient network communications.
+     */
+    private void processRequest(final String inputString) {
+        final StringRequest stringRequest = new StringRequest(Request.Method.POST, DAC_API_URL,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        tvResult.setText(response);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        tvResult.setText(NETWORK_ERROR_MSG);
+                    }
+                }){
+            @Override
+            protected Map<String, String> getParams() {
+                final Map<String, String> params = new HashMap<>();
+                try {
+                    final String expression = URLEncoder.encode(inputString, UTF8);
+                    params.put(REQ_KEY, expression);
+                } catch (UnsupportedEncodingException e) {
+                    tvResult.setText(BAD_INPUT_MSG);
+                }
+                return params;
+            }
+        };
+        final RequestQueue requestQueue = Volley.newRequestQueue(this);
+        requestQueue.add(stringRequest);
     }
 }
