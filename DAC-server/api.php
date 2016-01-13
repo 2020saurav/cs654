@@ -23,5 +23,5 @@ if (checkSanity($input)) {
 
 // TODO see if it can be made more secure
 function checkSanity($string) {
-    return preg_match('/^[0-9|.|+|-|*|\/]*$/', $string);
+    return preg_match('/^[0-9|.|+|\-|*|\/]*$/', $string);
 }
