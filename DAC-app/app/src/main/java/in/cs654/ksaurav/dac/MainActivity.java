@@ -137,36 +137,43 @@ public class MainActivity extends Activity implements OnClickListener {
 
             // In case of arithmetic operators
             case R.id.btnAdd:
-                // TODO check prev is a num
-                input = input.append(btnAdd.getText());
+                if (matchPreviousCharacter(input.toString(), "[0-9]")) {
+                    input = input.append(btnAdd.getText());
+                }
                 break;
             case R.id.btnSubtract:
-                // TODO check prev is a num or mult or div
-                input = input.append(btnSubtract.getText());
+                if (matchPreviousCharacter(input.toString(), "[0-9|×|÷]")) {
+                    input = input.append(btnSubtract.getText());
+                }
                 break;
             case R.id.btnMultiply:
-                // TODO check prev is a num
-                input = input.append(btnMultiply.getText());
+                if (matchPreviousCharacter(input.toString(), "[0-9]")) {
+                    input = input.append(btnMultiply.getText());
+                }
                 break;
             case R.id.btnDivide:
-                // TODO check prev is a num
-                input = input.append(btnDivide.getText());
+                if (matchPreviousCharacter(input.toString(), "[0-9]")) {
+                    input = input.append(btnDivide.getText());
+                }
                 break;
 
             // In case of decimal point
             case R.id.btnDecimal:
-                // TODO check no decimal used before in that num
-                input = input.append(btnDecimal.getText());
+                if (!isDecimalPresentInLastNumber(input.toString())) {
+                    input = input.append(btnDecimal.getText());
+                }
                 break;
 
             // In case of backspace, delete the last character.
             case R.id.btnBackSpace:
-                // TODO check for empty etc
+                final int len = input.toString().length();
+                if (len > 0) {
+                    input.delete(len-1, len);
+                }
                 break;
 
             // In case of clear, clear input and result
             case R.id.btnClear:
-                // TODO checks?
                 input = input.delete(0, input.length());
                 tvResult.setText(EMPTY);
                 break;
@@ -178,6 +185,33 @@ public class MainActivity extends Activity implements OnClickListener {
                 break;
         }
         tvInput.setText(input);
+    }
+
+    /**
+     * @param string given string expression
+     * @return true if decimal point is present in the last number
+     * This function first finds out the last occurence of any operator, which gives index to the
+     * last number in the expression. In that expression, it searches for any occuring decimal point
+     */
+    private boolean isDecimalPresentInLastNumber(String string) {
+        int lastOperatorIndex = Math.max(
+                Math.max(string.lastIndexOf("+"), string.lastIndexOf("-")),
+                Math.max(string.lastIndexOf("×"), string.lastIndexOf("÷"))
+        );
+        if (lastOperatorIndex == -1) {
+            return string.contains(".");
+        } else {
+            return string.substring(lastOperatorIndex).contains(".");
+        }
+    }
+
+    /**
+     * @param string given string
+     * @param regex regular expression to match with
+     * @return true if last character of the string matches the regex, false otherwise
+     */
+    private boolean matchPreviousCharacter(String string, String regex) {
+        return string.length() > 0 && string.substring(string.length() - 1).matches(regex);
     }
 
     /**
