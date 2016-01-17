@@ -35,7 +35,7 @@ public class MainActivity extends Activity implements OnClickListener {
     private static Button btnFive, btnSix, btnSeven, btnEight, btnNine;
     private static Button btnBackSpace, btnClear, btnEquals, btnDecimal;
     public static final String EMPTY = "";
-    public static final String DAC_API_URL = "http://172.24.1.62/dac-server/api.php";
+    public static final String DAC_API_URL = "http://cs654.16mb.com/api.php";
     public static final String BAD_INPUT_MSG = "Bad Input";
     public static final String NETWORK_ERROR_MSG = "Network Error";
     public static final String UTF8 = "utf-8";
@@ -142,7 +142,7 @@ public class MainActivity extends Activity implements OnClickListener {
                 }
                 break;
             case R.id.btnSubtract:
-                if (matchPreviousCharacter(input.toString(), "[0-9|×|÷]")) {
+                if (matchPreviousCharacter(input.toString(), "[0-9|×|÷]") || input.length()==0) {
                     input = input.append(btnSubtract.getText());
                 }
                 break;
@@ -194,7 +194,7 @@ public class MainActivity extends Activity implements OnClickListener {
      * last number in the expression. In that expression, it searches for any occuring decimal point
      */
     private boolean isDecimalPresentInLastNumber(String string) {
-        int lastOperatorIndex = Math.max(
+        final int lastOperatorIndex = Math.max(
                 Math.max(string.lastIndexOf("+"), string.lastIndexOf("-")),
                 Math.max(string.lastIndexOf("×"), string.lastIndexOf("÷"))
         );
