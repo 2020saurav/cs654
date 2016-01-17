@@ -8,8 +8,8 @@ $response = "";
 if (checkSanity($input)) {
     // check in database
     $time = time();
-    $queryResponse = mysql_query("SELECT result FROM dac WHERE expression='$input'", $db);
-    if (mysql_num_rows($queryResponse) == 0) {
+    $queryResponse = mysqli_query($db, "SELECT result FROM dac WHERE expression='$input'");
+    if ((mysqli_num_rows($queryResponse)) == 0) {
         try {
             eval( '$result = (' . $input . ');' );
             if (is_numeric ($result)) {
@@ -23,12 +23,12 @@ if (checkSanity($input)) {
             error_log("Exception caught in eval", $e);
         }
         echo ($response);
-        mysql_query("INSERT INTO dac VALUES ('$input', '$response', '$time')", $db);
+        mysqli_query($db, "INSERT INTO dac VALUES ('$input', '$response', '$time')");
 
     } else {
-        $result = mysql_fetch_assoc($queryResponse);
+        $result = mysqli_fetch_assoc($queryResponse);
         echo (floatval($result['result']));
-        mysql_query("UPDATE dac SET last_used = '$time' WHERE expression = '$input'");
+        mysqli_query($db, "UPDATE dac SET last_used = '$time' WHERE expression = '$input'");
     }
 } else {
     $response = "Bad Input";
