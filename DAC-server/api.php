@@ -1,27 +1,42 @@
 <?php
 
-$input    = utf8_decode(urldecode($_POST["input"]));
-error_log($input);
+include ("db_cred.php");
 
-// TODO caching using MySQL or file
+$input    = utf8_decode(urldecode($_POST["input"]));
+$response = "";
+
 if (checkSanity($input)) {
-    try {
-        eval( '$result = (' . $input . ');' );
-        if ($result) {
-            $response = $result;
-        } else {
+    // check in database
+    $time = time();
+    $queryResponse = mysql_query("SELECT result FROM dac WHERE expression='$input'", $db);
+    if (mysql_num_rows($queryResponse) == 0) {
+        try {
+            eval( '$result = (' . $input . ');' );
+            if (is_numeric ($result)) {
+                $response = $result;
+            } else {
+                $response = "Bad Input";
+                error_log("Not numeric Input");
+            }
+        } catch (Exception $e) {
             $response = "Bad Input";
+            error_log("Exception caught in eval", $e);
         }
-    } catch (Exception $e) {
-        $response = "Bad Input";
+        echo ($response);
+        mysql_query("INSERT INTO dac VALUES ('$input', '$response', '$time')", $db);
+
+    } else {
+        $result = mysql_fetch_assoc($queryResponse);
+        echo (floatval($result['result']));
+        mysql_query("UPDATE dac SET last_used = '$time' WHERE expression = '$input'");
     }
-    echo json_encode($response);
 } else {
     $response = "Bad Input";
-    echo json_encode($response);
+    echo ($response);
+    error_log("Input not sane");
 }
 
-// TODO see if it can be made more secure
+// Checks if expression has only numbers, decimal or operators
 function checkSanity($string) {
     return preg_match('/^[0-9|.|+|\-|*|\/]*$/', $string);
 }
