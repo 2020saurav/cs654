@@ -23,6 +23,8 @@ public class Broker extends Thread {
     private final Socket socket;
     private String email = "";
     private final static Logger LOGGER = Logger.getLogger(Broker.class.getName());
+    private static final String NOT_LOGGED_IN_MESSAGE = "ERROR: You are not logged in. Please login to continue";
+    private static final String ALREADY_LOGGED_IN_MESSAGE = "ERROR: You are already logged in";
 
     public Broker(Socket socket) {
         this.socket = socket;
@@ -95,10 +97,22 @@ public class Broker extends Thread {
      * @throws IOException
      */
     private void handlePublish(String input) throws IOException {
-        final Message message = Message.convertToMessage(input, this.email);
-        LOGGER.info(message.getPublisherId() + " published in " + message.getTopicId());
-        // TODO add message to db?
-        notifySubscribers(message);
+        if (checkLogin()) {
+            final Message message = Message.convertToMessage(input, this.email);
+            LOGGER.info(message.getPublisherId() + " published in " + message.getTopicId());
+            // TODO add message to db?
+            notifySubscribers(message);
+        } else {
+            this.sendMessage(NOT_LOGGED_IN_MESSAGE);
+        }
+    }
+
+    /**
+     * If email is empty, user not logged in
+     * @return true if logged in, false otherwise
+     */
+    private boolean checkLogin() {
+        return !this.email.equals("");
     }
 
     /**
@@ -151,6 +165,7 @@ public class Broker extends Thread {
         // REGISTER ksaurav@iitk.ac.in
         final String newEmail = input.split(" ")[1];
         addUser(newEmail);
+        // login check not required here. Anyone should be able to register
     }
 
     /**
@@ -158,27 +173,36 @@ public class Broker extends Thread {
      * @param email of the subscriber
      */
     private void addUser(String email) {
-        // TODO insert in db
+        // TODO insert in db, if not already exists
     }
 
     /**
      * Change email of the subscriber on current thread
      * @param input containing new email id
      */
-    private void handleEmailChange(String input) {
+    private void handleEmailChange(String input) throws IOException {
         // EMAILCHANGE ksaurav@iitk.ac.in
-        // TODO update db
-        // TODO update hashmap
+        if (checkLogin()) {
+            final String newEmail = input.split(" ")[1];
+            // TODO update db
+            // TODO update hashmap
+        } else {
+            this.sendMessage(NOT_LOGGED_IN_MESSAGE);
+        }
     }
 
     /**
      * Unsubscribe the current subscriber from selected topic
      * @param input with email and topicId
      */
-    private void handleUnsubscribe(String input) {
+    private void handleUnsubscribe(String input) throws IOException {
         // UNSUBSCRIBE T42
-        final String topicId = input.split(" ")[1];
-        removeSubscription(topicId);
+        if (checkLogin()) {
+            final String topicId = input.split(" ")[1];
+            removeSubscription(topicId);
+        } else {
+            this.sendMessage(NOT_LOGGED_IN_MESSAGE);
+        }
     }
 
     /**
@@ -193,11 +217,14 @@ public class Broker extends Thread {
      * Subscribe to a topic
      * @param input containing the topic id
      */
-    private void handleSubscribe(String input) {
+    private void handleSubscribe(String input) throws IOException {
         // SUBSCRIBE T42
-        // TODO check login everywhere
-        final String topicId = input.split(" ")[1];
-        addSubscription(topicId);
+        if (checkLogin()) {
+            final String topicId = input.split(" ")[1];
+            addSubscription(topicId);
+        } else {
+            this.sendMessage(NOT_LOGGED_IN_MESSAGE);
+        }
     }
 
     /**
@@ -211,10 +238,14 @@ public class Broker extends Thread {
     /**
      * Logout the current user
      */
-    private void handleLogout() {
-        Server.brokerHashMap.remove(this.email);
-        LOGGER.info(this.email + " logged out");
-        this.email = "";
+    private void handleLogout() throws IOException {
+        if (checkLogin()) {
+            Server.brokerHashMap.remove(this.email);
+            LOGGER.info(this.email + " logged out");
+            this.email = "";
+        } else {
+            this.sendMessage(NOT_LOGGED_IN_MESSAGE);
+        }
     }
 
     /**
@@ -222,12 +253,20 @@ public class Broker extends Thread {
      * @param input containing email of the user
      * @return true if the valid user and not already logged in
      */
-    private boolean handleLogin(String input) {
+    private boolean handleLogin(String input) throws IOException {
         // LOGIN 2020saurav@gmail.com
-        this.email = input.split(" ")[1];
-        Server.brokerHashMap.put(this.email, this);
-        LOGGER.info(this.email + " logged in");
-        return true; // TODO check login in db if it exists
-        // TODO check if already logged in
+        if (checkLogin()) {
+            this.sendMessage(ALREADY_LOGGED_IN_MESSAGE);
+            return true; // allow to continue
+        } else if (Server.brokerHashMap.get(this.email) != null) {
+            this.sendMessage(ALREADY_LOGGED_IN_MESSAGE + " at " + (this.socket.getInetAddress().toString()));
+            return false; // not allowed to login
+        } else {
+            this.email = input.split(" ")[1];
+            Server.brokerHashMap.put(this.email, this);
+            LOGGER.info(this.email + " logged in");
+            this.sendMessage("WELCOME " + this.email);
+            return true; // TODO check login in db if it exists
+        }
     }
 }
