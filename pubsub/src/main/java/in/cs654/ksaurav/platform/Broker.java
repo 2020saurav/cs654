@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -42,6 +41,7 @@ public class Broker extends Thread {
             processMessage(reader);
         } catch (Exception e) {
             LOGGER.severe("Error in processing message: " + e.toString());
+            e.printStackTrace();
         } finally {
             try {
                 socket.close();
@@ -156,7 +156,7 @@ public class Broker extends Thread {
             if (broker != null) {
                 broker.sendMessage(message.serialize());
             } else {
-                Mongo.insertPendingMessage(this.email, message.serialize());
+                Mongo.insertPendingMessage(subscriber, message.serialize());
             }
         }
     }
@@ -265,10 +265,22 @@ public class Broker extends Thread {
                 Server.brokerHashMap.put(this.email, this);
                 LOGGER.info(this.email + " logged in");
                 this.sendMessage("WELCOME " + this.email);
+                pushPendingMessages();
                 return true;
             } else {
                 return false;
             }
+        }
+    }
+
+    /**
+     * This method pushes old pending messages (if any) to the subscriber.
+     * @throws IOException
+     */
+    private void pushPendingMessages() throws IOException {
+        final List<String> messages = Mongo.popPendingMessages(this.email);
+        for (String message : messages) {
+            this.sendMessage(message);
         }
     }
 }

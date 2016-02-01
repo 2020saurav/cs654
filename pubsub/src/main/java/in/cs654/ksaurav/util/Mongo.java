@@ -34,7 +34,7 @@ public class Mongo {
      * @return true if present, false otherwise
      */
     public static boolean isSubscriberPresent(String email) {
-        FindIterable<Document> docs = subs.find(new Document("email", email));
+        final FindIterable<Document> docs = subs.find(new Document("email", email));
         return docs.first() != null;
     }
 
@@ -75,7 +75,7 @@ public class Mongo {
      */
     public static String getIdFromEmail(String email) {
         if (isSubscriberPresent(email)) {
-            FindIterable<Document> docs = subs.find(new Document("email", email));
+            final FindIterable<Document> docs = subs.find(new Document("email", email));
             return docs.first().get("_id").toString();
         } else {
             return "";
@@ -88,7 +88,7 @@ public class Mongo {
      * @return email of the user. If no such id exists, return empty string.
      */
     public static String getEmailFromId(String id) {
-        FindIterable<Document> docs = subs.find(new Document("_id", new ObjectId(id)));
+        final FindIterable<Document> docs = subs.find(new Document("_id", new ObjectId(id)));
         if (docs.first() != null) {
             return docs.first().get("email").toString();
         } else {
@@ -102,7 +102,7 @@ public class Mongo {
      * @param message to be saved
      */
     public static void insertPendingMessage(String email, String message) {
-        String subId = getIdFromEmail(email);
+        final String subId = getIdFromEmail(email);
         if (!subId.equals("")) {
             pendingMsgs.insertOne(new Document("subId", subId).append("message", message));
         }
@@ -114,11 +114,9 @@ public class Mongo {
      * @return list of string, containing the messages
      */
     public static List<String> popPendingMessages(String email) {
-        List<String> messages = new ArrayList<>();
-        FindIterable<Document> docs = pendingMsgs.find(new Document("subId", getIdFromEmail(email)));
-        docs.forEach((Block<Document>) document -> {
-            messages.add(document.get("message").toString());
-        });
+        final List<String> messages = new ArrayList<>();
+        final FindIterable<Document> docs = pendingMsgs.find(new Document("subId", getIdFromEmail(email)));
+        docs.forEach((Block<Document>) document -> messages.add(document.get("message").toString()));
         pendingMsgs.deleteMany(new Document("subId", getIdFromEmail(email)));
         return messages;
     }
@@ -129,9 +127,9 @@ public class Mongo {
      * @return list of subscriber of a given topic
      */
     public static List<String> getSubscriberByTopic(String topicId) {
-        List<String> subscribers = new ArrayList<>();
-        Document doc = topicSubs.find(new Document("topicId", topicId)).first();
-        List<Document> docs = (ArrayList) doc.get("subs");
+        final List<String> subscribers = new ArrayList<>();
+        final Document doc = topicSubs.find(new Document("topicId", topicId)).first();
+        final List<Document> docs = (ArrayList) doc.get("subs");
         subscribers.addAll(docs.stream().filter(d -> d.get("subId") != null)
                                 .map(d -> getEmailFromId(d.getString("subId")))
                                 .collect(Collectors.toList()));
@@ -144,7 +142,7 @@ public class Mongo {
      * @return name of the topic
      */
     public static String getTopicNameById(String topicId) {
-        Document doc = topics.find(new Document("topicId", topicId)).first();
+        final Document doc = topics.find(new Document("topicId", topicId)).first();
         return (doc != null) ? doc.getString("topicName") : null;
     }
 
@@ -157,8 +155,8 @@ public class Mongo {
     public static boolean addTopic(String topicId, String topicName) {
         if(topics.find(new Document("topicId", topicId)).first() == null) {
             topics.insertOne(new Document("topicId", topicId).append("topicName", topicName));
-            List<Document> subsList = new ArrayList<>();
-            Document document = new Document("topicId", topicId).append("subs", subsList);
+            final List<Document> subsList = new ArrayList<>();
+            final Document document = new Document("topicId", topicId).append("subs", subsList);
             topicSubs.insertOne(document);
             return true;
         }
