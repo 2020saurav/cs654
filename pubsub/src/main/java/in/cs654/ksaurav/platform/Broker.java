@@ -61,6 +61,7 @@ public class Broker extends Thread {
         String messageHead;
         if (input == null) {
             LOGGER.warning("Null message received");
+            handleLogout();
             return;
         }
         try {
@@ -101,6 +102,7 @@ public class Broker extends Thread {
             default:
                 LOGGER.warning("Message head didn't match any case. Ignoring message.");
                 this.sendMessage("Connection closed.");
+                handleLogout();
                 break;
         }
     }
@@ -195,10 +197,14 @@ public class Broker extends Thread {
         // EMAILCHANGE ksaurav@iitk.ac.in
         if (checkLogin()) {
             final String newEmail = input.split(" ")[1];
-            Mongo.changeEmail(this.email, newEmail);
-            final Broker broker = Server.brokerHashMap.remove(this.email);
-            this.email = newEmail;
-            Server.brokerHashMap.put(this.email, broker);
+            if (Mongo.changeEmail(this.email, newEmail)) {
+                final Broker broker = Server.brokerHashMap.remove(this.email);
+                this.email = newEmail;
+                Server.brokerHashMap.put(this.email, broker);
+                this.sendMessage("Email changed successfully");
+            } else {
+                this.sendMessage("Email already registered. Try again.");
+            }
         } else {
             this.sendMessage(NOT_LOGGED_IN_MESSAGE);
         }

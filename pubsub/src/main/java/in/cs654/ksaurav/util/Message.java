@@ -29,9 +29,9 @@ public class Message {
     }
 
     public String serialize() {
-        return "PUBLISHER: " + getPublisher() + "\n"
+        return "\nNew Message\n---------\nPUBLISHER: " + getPublisher() + "\n"
                 + "TOPIC: " + Mongo.getTopicNameById(getTopicId()) + "\n"
-                + "CONTENT: " + getContent() + "\n";
+                + "CONTENT: " + getContent() + "\n---------\n";
     }
 
     /**

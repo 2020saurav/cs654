@@ -8,10 +8,39 @@ import java.net.Socket;
 
 public class Publisher {
     public static void main(String[] args) throws IOException {
-        Socket socket = new Socket("127.0.0.1", 2020);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-        writer.print("PUBLISH P1 T42 Yoo Bro, what's up?");
-        writer.flush();
+        final Socket socket = new Socket("127.0.0.1", 2020);
+        final BufferedReader socketReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        final BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+        final PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+        System.out.println("USAGE:\n------\nA. CREATETOPIC topicId topicName\nB. PUBLISH publisher topicId content\n");
+
+        (new Thread() {
+            public void run() {
+                try {
+                    String msg;
+                    while((msg=socketReader.readLine()) != null) {
+                        System.out.println(msg);
+                    }
+                } catch (IOException e) {
+                    System.out.println("Sorry, error printing message");
+                } finally {
+                    System.out.println("Good Bye!");
+                    System.exit(0);
+                }
+            }
+        }).start();
+        (new Thread() {
+            public void run() {
+                try {
+                    String input;
+                    while ((input=stdin.readLine()) != null) {
+                        writer.println(input);
+                        writer.flush();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 }

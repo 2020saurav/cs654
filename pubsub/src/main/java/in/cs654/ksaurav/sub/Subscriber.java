@@ -8,13 +8,13 @@ import java.net.Socket;
 
 public class Subscriber {
     public static void main(String[] args) throws IOException {
-        Socket socket = new Socket("127.0.0.1", 2020);
-        BufferedReader socketReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
-        PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-        String email = stdin.readLine();
-        writer.println("LOGIN " + email);
-        writer.flush();
+        final Socket socket = new Socket("127.0.0.1", 2020);
+        final BufferedReader socketReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        final BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+        final PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+        System.out.println("USAGE:\n------\nA. REGISTER email \nB. LOGIN email\n\tSUBSCRIBE topicId\n\t" +
+        "UNSUBSCRIBE topicId\n\tEMAILCHANGE newEmail\n\tLOGOUT\n");
+
         (new Thread() {
             public void run() {
                 try {
@@ -26,6 +26,7 @@ public class Subscriber {
                     System.out.println("Sorry, error printing message");
                 } finally {
                     System.out.println("Good Bye!");
+                    System.exit(0);
                 }
             }
         }).start();
