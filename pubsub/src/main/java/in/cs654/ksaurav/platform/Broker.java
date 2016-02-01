@@ -1,6 +1,8 @@
 package in.cs654.ksaurav.platform;
 
 import in.cs654.ksaurav.util.Message;
+import in.cs654.ksaurav.util.Mongo;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -93,6 +95,9 @@ public class Broker extends Thread {
             case "PUBLISH":
                 handlePublish(input);
                 break;
+            case "CREATETOPIC":
+                handleCreateTopic(input);
+                break;
             default:
                 LOGGER.warning("Message head didn't match any case. Ignoring message.");
                 this.sendMessage("Connection closed.");
@@ -101,20 +106,34 @@ public class Broker extends Thread {
     }
 
     /**
+     * PUBLISHER METHOD
+     * This method creates a new topic in database
+     * @param input string from publisher
+     */
+    private void handleCreateTopic(String input) throws IOException {
+        // CREATETOPIC T42 Science and Technology
+        final int firstSpaceIndex = input.indexOf(" ");
+        final int secondSpaceIndex = input.indexOf(" ", firstSpaceIndex+1);
+        final String topicId = input.substring(firstSpaceIndex+1, secondSpaceIndex);
+        final String topicName = input.substring(secondSpaceIndex+1);
+        if (Mongo.addTopic(topicId, topicName)) {
+            this.sendMessage("Added a new topic (" + topicId + ") " + topicName);
+        } else {
+            this.sendMessage("Topic Id already exists. Try again.");
+        }
+    }
+
+    /**
+     * PUBLISHER METHOD
      * This method handles request from a publisher to publish a message.
      * The message is parsed and is then passed on to all the subscribers of the topic of the message.
      * @param input string from the publisher
      * @throws IOException
      */
     private void handlePublish(String input) throws IOException {
-        if (checkLogin()) {
-            final Message message = Message.convertToMessage(input);
-            LOGGER.info(message.getPublisher() + " published in " + message.getTopicId());
-            // TODO add message to db?
-            notifySubscribers(message);
-        } else {
-            this.sendMessage(NOT_LOGGED_IN_MESSAGE);
-        }
+        final Message message = Message.convertToMessage(input);
+        LOGGER.info(message.getPublisher() + " published in " + message.getTopicId());
+        notifySubscribers(message);
     }
 
     /**
@@ -127,18 +146,17 @@ public class Broker extends Thread {
 
     /**
      * This method gets the list of subscribers of the topic from the database and sends the message to those logged in.
-     * TODO decide case for offline users
      * @param message object containing content, publisherId and topicId
      * @throws IOException
      */
     private void notifySubscribers(Message message) throws IOException {
-        List<String> subscribers = getSubscribersList(message.getTopicId());
+        List<String> subscribers = Mongo.getSubscriberByTopic(message.getTopicId());
         for (String subscriber : subscribers) {
             Broker broker = Server.brokerHashMap.get(subscriber);
             if (broker != null) {
                 broker.sendMessage(message.serialize());
             } else {
-                // TODO dump the message or store it somewhere to deliver later
+                Mongo.insertPendingMessage(this.email, message.serialize());
             }
         }
     }
@@ -155,35 +173,18 @@ public class Broker extends Thread {
     }
 
     /**
-     * Get list of subscribers of a selected topic (by Id)
-     * @param topicId of the topic
-     * @return list of subscribers (email)
-     */
-    private List<String> getSubscribersList(String topicId) {
-        // TODO change it to make query to db
-        List<String> subscribers = new ArrayList<>();
-        subscribers.add("2020saurav@gmail.com");
-        subscribers.add("ksaurav@iitk.ac.in");
-        return subscribers;
-    }
-
-    /**
      * Register new user, by inserting email in db
      * @param input from subscriber socket
      */
-    private void handleRegister(String input) {
+    private void handleRegister(String input) throws IOException {
         // REGISTER ksaurav@iitk.ac.in
-        final String newEmail = input.split(" ")[1];
-        addUser(newEmail);
         // login check not required here. Anyone should be able to register
-    }
-
-    /**
-     * Insert email in database
-     * @param email of the subscriber
-     */
-    private void addUser(String email) {
-        // TODO insert in db, if not already exists
+        final String newEmail = input.split(" ")[1];
+        if(Mongo.insertSubscriber(newEmail)) {
+            this.sendMessage("Successfully Registered");
+        } else {
+            this.sendMessage("Email already registered. Try again.");
+        }
     }
 
     /**
@@ -194,8 +195,10 @@ public class Broker extends Thread {
         // EMAILCHANGE ksaurav@iitk.ac.in
         if (checkLogin()) {
             final String newEmail = input.split(" ")[1];
-            // TODO update db
-            // TODO update hashmap
+            Mongo.changeEmail(this.email, newEmail);
+            final Broker broker = Server.brokerHashMap.remove(this.email);
+            this.email = newEmail;
+            Server.brokerHashMap.put(this.email, broker);
         } else {
             this.sendMessage(NOT_LOGGED_IN_MESSAGE);
         }
@@ -209,18 +212,10 @@ public class Broker extends Thread {
         // UNSUBSCRIBE T42
         if (checkLogin()) {
             final String topicId = input.split(" ")[1];
-            removeSubscription(topicId);
+            Mongo.removeTopicSubscription(this.email, topicId);
         } else {
             this.sendMessage(NOT_LOGGED_IN_MESSAGE);
         }
-    }
-
-    /**
-     * Remove subscription of the current user from selected topic
-     * @param topicId of the topic to be unsubscribed from
-     */
-    private void removeSubscription(String topicId) {
-        // TODO remove from db
     }
 
     /**
@@ -231,18 +226,10 @@ public class Broker extends Thread {
         // SUBSCRIBE T42
         if (checkLogin()) {
             final String topicId = input.split(" ")[1];
-            addSubscription(topicId);
+            Mongo.addTopicSubscription(this.email, topicId);
         } else {
             this.sendMessage(NOT_LOGGED_IN_MESSAGE);
         }
-    }
-
-    /**
-     * Add subscription to selected topic id
-     * @param topicId of the selected topic
-     */
-    private void addSubscription(String topicId) {
-        // TODO insert into DB
     }
 
     /**
@@ -265,18 +252,23 @@ public class Broker extends Thread {
      */
     private boolean handleLogin(String input) throws IOException {
         // LOGIN 2020saurav@gmail.com
+        final String email = input.split(" ")[1];
         if (checkLogin()) {
             this.sendMessage(ALREADY_LOGGED_IN_MESSAGE);
             return true; // allow to continue
-        } else if (Server.brokerHashMap.containsKey(this.email)) {
-            this.sendMessage(ALREADY_LOGGED_IN_MESSAGE + " at " + (this.socket.getInetAddress().toString()));
+        } else if (Server.brokerHashMap.containsKey(email)) {
+            this.sendMessage(ALREADY_LOGGED_IN_MESSAGE + " from " + (this.socket.getInetAddress().toString()));
             return false; // not allowed to login
         } else {
-            this.email = input.split(" ")[1];
-            Server.brokerHashMap.put(this.email, this);
-            LOGGER.info(this.email + " logged in");
-            this.sendMessage("WELCOME " + this.email);
-            return true; // TODO check login in db if it exists
+            if (Mongo.isSubscriberPresent(email)) {
+                this.email = email;
+                Server.brokerHashMap.put(this.email, this);
+                LOGGER.info(this.email + " logged in");
+                this.sendMessage("WELCOME " + this.email);
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 }

@@ -30,7 +30,7 @@ public class Message {
 
     public String serialize() {
         return "PUBLISHER: " + getPublisher() + "\n"
-                + "TOPIC ID: " + getTopicId() + "\n"
+                + "TOPIC: " + Mongo.getTopicNameById(getTopicId()) + "\n"
                 + "CONTENT: " + getContent() + "\n";
     }
 
