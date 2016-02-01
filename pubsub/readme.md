@@ -9,9 +9,9 @@ Build this project using maven. From the project root:
 * Build
     - `mvn compile`
 * Run
-- `java -cp target/classes/:lib/mongo-java-driver-3.2.1.jar in.cs654.ksaurav.platform.Server`
-- `java -cp target/classes in.cs654.ksaurav.sub.Subscriber`
-- `java -cp target/classes in.cs654.ksaurav.pub.Publisher`
+    - `java -cp target/classes/:lib/mongo-java-driver-3.2.1.jar in.cs654.ksaurav.platform.Server`
+    - `java -cp target/classes in.cs654.ksaurav.sub.Subscriber`
+    - `java -cp target/classes in.cs654.ksaurav.pub.Publisher`
 
 ### LICENSE
 Public Domain (Unlicense)
