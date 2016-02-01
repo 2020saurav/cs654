@@ -1,23 +1,23 @@
 package in.cs654.ksaurav.util;
 
 /**
- * This class is used to store message structure containing publisherId, topicId and the content.
+ * This class is used to store message structure containing publisher, topicId and the content.
  * It also provides a function to directly convert the socket message to Message object.
  */
 public class Message {
 
-    private final String publisherId;
+    private final String publisher;
     private final String topicId;
     private final String content;
 
-    public Message(String publisherId, String topicId, String content) {
-        this.publisherId = publisherId;
+    public Message(String publisher, String topicId, String content) {
+        this.publisher = publisher;
         this.topicId = topicId;
         this.content = content;
     }
 
-    public String getPublisherId() {
-        return publisherId;
+    public String getPublisher() {
+        return publisher;
     }
 
     public String getTopicId() {
@@ -29,7 +29,7 @@ public class Message {
     }
 
     public String serialize() {
-        return "PUBLISHER: " + getPublisherId() + "\n"
+        return "PUBLISHER: " + getPublisher() + "\n"
                 + "TOPIC ID: " + getTopicId() + "\n"
                 + "CONTENT: " + getContent() + "\n";
     }
@@ -37,15 +37,16 @@ public class Message {
     /**
      * To convert message from socket to Message object.
      * @param input from the socket message in the following format:
-     *              "PUBLISH T42 Lorem ipsum dolor sit amet..."
+     *              "PUBLISH BBC T42 Lorem ipsum dolor sit amet..."
      * @return Message object with corresponding fields.
      */
-    public static Message convertToMessage(String input, String pubId) {
-
+    public static Message convertToMessage(String input) {
         final int firstSpaceIndex = input.indexOf(" ");
         final int secondSpaceIndex = input.indexOf(" ", firstSpaceIndex+1);
-        final String topicId = input.substring(firstSpaceIndex+1, secondSpaceIndex);
-        final String content = input.substring(secondSpaceIndex+1);
-        return new Message(pubId, topicId, content);
+        final int thirdSpaceIndex = input.indexOf(" ", secondSpaceIndex+1);
+        final String publisher = input.substring(firstSpaceIndex+1, secondSpaceIndex);
+        final String topicId = input.substring(secondSpaceIndex+1, thirdSpaceIndex);
+        final String content = input.substring(thirdSpaceIndex+1);
+        return new Message(publisher, topicId, content);
     }
 }

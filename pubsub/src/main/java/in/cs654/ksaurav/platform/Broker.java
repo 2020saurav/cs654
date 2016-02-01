@@ -38,7 +38,7 @@ public class Broker extends Thread {
         try {
             final BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             processMessage(reader);
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.severe("Error in processing message: " + e.toString());
         } finally {
             try {
@@ -56,7 +56,16 @@ public class Broker extends Thread {
      */
     private void processMessage(BufferedReader reader) throws IOException {
         final String input = reader.readLine();
-        final String messageHead = input.substring(0, input.indexOf(" "));
+        String messageHead;
+        if (input == null) {
+            LOGGER.warning("Null message received");
+            return;
+        }
+        try {
+            messageHead = input.substring(0, input.indexOf(" "));
+        } catch (Exception e) {
+            messageHead = "";
+        }
         switch (messageHead) {
             case "LOGIN":
                 if (handleLogin(input)){
@@ -86,6 +95,7 @@ public class Broker extends Thread {
                 break;
             default:
                 LOGGER.warning("Message head didn't match any case. Ignoring message.");
+                this.sendMessage("Connection closed.");
                 break;
         }
     }
@@ -98,8 +108,8 @@ public class Broker extends Thread {
      */
     private void handlePublish(String input) throws IOException {
         if (checkLogin()) {
-            final Message message = Message.convertToMessage(input, this.email);
-            LOGGER.info(message.getPublisherId() + " published in " + message.getTopicId());
+            final Message message = Message.convertToMessage(input);
+            LOGGER.info(message.getPublisher() + " published in " + message.getTopicId());
             // TODO add message to db?
             notifySubscribers(message);
         } else {
@@ -258,7 +268,7 @@ public class Broker extends Thread {
         if (checkLogin()) {
             this.sendMessage(ALREADY_LOGGED_IN_MESSAGE);
             return true; // allow to continue
-        } else if (Server.brokerHashMap.get(this.email) != null) {
+        } else if (Server.brokerHashMap.containsKey(this.email)) {
             this.sendMessage(ALREADY_LOGGED_IN_MESSAGE + " at " + (this.socket.getInetAddress().toString()));
             return false; // not allowed to login
         } else {
