@@ -139,7 +139,7 @@ public class Mongo {
     /**
      * Method to get name of the topic from topicId
      * @param topicId of the topic
-     * @return name of the topic
+     * @return name of the topic, null if doesn't exist
      */
     public static String getTopicNameById(String topicId) {
         final Document doc = topics.find(new Document("topicId", topicId)).first();
@@ -187,6 +187,10 @@ public class Mongo {
         }
     }
 
+    /**
+     * Method to get all topics in printable format
+     * @return a string containing list of all topics in database
+     */
     public static String getTopics() {
         final List<String> topicList = new ArrayList<>();
         topics.find().forEach((Block<Document>) document ->

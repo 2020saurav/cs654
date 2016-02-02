@@ -6,14 +6,23 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+/**
+ * This class is to run process for publisher. The process presents a command line interface to input commands to be
+ * sent to a broker thread in the Server process. There are two separate threads to handle input and output so that it
+ * doesn't block.
+ */
 public class Publisher {
     public static void main(String[] args) throws IOException {
         final Socket socket = new Socket("127.0.0.1", 2020);
         final BufferedReader socketReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         final BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         final PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-        System.out.println("USAGE:\n------\nA. CREATETOPIC topicId topicName\nB. PUBLISH publisher topicId content\nC. GETTOPICS\n");
+        System.out.println("USAGE:\n------\nA. CREATETOPIC topicId topicName\nB. PUBLISH publisher topicId content\n" +
+                "C. GETTOPICS\n");
 
+        /**
+         * Anonymous thread to print to stdout.
+         */
         (new Thread() {
             public void run() {
                 try {
@@ -29,6 +38,10 @@ public class Publisher {
                 }
             }
         }).start();
+
+        /**
+         * Anonymous thread to read from stdin and send to the Server.
+         */
         (new Thread() {
             public void run() {
                 try {
@@ -37,8 +50,7 @@ public class Publisher {
                         writer.println(input);
                         writer.flush();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (IOException ignored) {
                 }
             }
         }).start();

@@ -95,9 +95,11 @@ public class Broker extends Thread {
                 break;
             case "PUBLISH":
                 handlePublish(input);
+                processMessage(reader);
                 break;
             case "CREATETOPIC":
                 handleCreateTopic(input);
+                processMessage(reader);
                 break;
             case "GETTOPICS":
                 handleGetTopic();
@@ -122,6 +124,10 @@ public class Broker extends Thread {
      * @param input string from publisher
      */
     private void handleCreateTopic(String input) throws IOException {
+        if (!this.email.equals("")) {
+            this.sendMessage("Subscribers are not to create topic");
+            return;
+        }
         // CREATETOPIC T42 Science and Technology
         final int firstSpaceIndex = input.indexOf(" ");
         final int secondSpaceIndex = input.indexOf(" ", firstSpaceIndex+1);
@@ -142,9 +148,18 @@ public class Broker extends Thread {
      * @throws IOException
      */
     private void handlePublish(String input) throws IOException {
+        if (!this.email.equals("")) {
+            this.sendMessage("Subscribers are not allowed to publish");
+            return;
+        }
         final Message message = Message.convertToMessage(input);
-        LOGGER.info(message.getPublisher() + " published in " + message.getTopicId());
-        notifySubscribers(message);
+        if (Mongo.getTopicNameById(message.getTopicId()) != null) {
+            LOGGER.info(message.getPublisher() + " published in " + message.getTopicId());
+            notifySubscribers(message);
+            this.sendMessage("Thanks for publishing.");
+        } else {
+            this.sendMessage("Bad Topic Id. Create the topic before publishing");
+        }
     }
 
     /**
@@ -228,6 +243,7 @@ public class Broker extends Thread {
         if (checkLogin()) {
             final String topicId = input.split(" ")[1];
             Mongo.removeTopicSubscription(this.email, topicId);
+            this.sendMessage("Unsubscribed");
         } else {
             this.sendMessage(NOT_LOGGED_IN_MESSAGE);
         }
@@ -242,6 +258,11 @@ public class Broker extends Thread {
         if (checkLogin()) {
             final String topicId = input.split(" ")[1];
             Mongo.addTopicSubscription(this.email, topicId);
+            if (Mongo.getTopicNameById(topicId) != null) {
+                this.sendMessage("Subscribed to " + Mongo.getTopicNameById(topicId));
+            } else {
+                this.sendMessage("Bad Topic Id");
+            }
         } else {
             this.sendMessage(NOT_LOGGED_IN_MESSAGE);
         }
