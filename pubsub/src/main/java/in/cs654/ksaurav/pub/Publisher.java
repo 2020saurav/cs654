@@ -12,7 +12,7 @@ public class Publisher {
         final BufferedReader socketReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         final BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         final PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-        System.out.println("USAGE:\n------\nA. CREATETOPIC topicId topicName\nB. PUBLISH publisher topicId content\n");
+        System.out.println("USAGE:\n------\nA. CREATETOPIC topicId topicName\nB. PUBLISH publisher topicId content\nC. GETTOPICS\n");
 
         (new Thread() {
             public void run() {

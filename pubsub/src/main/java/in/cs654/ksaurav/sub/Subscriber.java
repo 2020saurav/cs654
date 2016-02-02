@@ -13,7 +13,7 @@ public class Subscriber {
         final BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         final PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
         System.out.println("USAGE:\n------\nA. REGISTER email \nB. LOGIN email\n\tSUBSCRIBE topicId\n\t" +
-        "UNSUBSCRIBE topicId\n\tEMAILCHANGE newEmail\n\tLOGOUT\n");
+        "UNSUBSCRIBE topicId\n\tEMAILCHANGE newEmail\n\tLOGOUT\nC. GETTOPICS\n");
 
         (new Thread() {
             public void run() {

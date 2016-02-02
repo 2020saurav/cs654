@@ -4,7 +4,7 @@ More description coming soon.
 
 Author: 2020saurav@gmail.com
 
-# Build & Run
+### Build & Run
 Build this project using maven. From the project root:
 * Build
     - `mvn compile`

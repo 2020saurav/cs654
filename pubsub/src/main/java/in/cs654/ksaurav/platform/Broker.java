@@ -67,7 +67,7 @@ public class Broker extends Thread {
         try {
             messageHead = input.substring(0, input.indexOf(" "));
         } catch (Exception e) {
-            messageHead = "";
+            messageHead = input;
         }
         switch (messageHead) {
             case "LOGIN":
@@ -99,12 +99,21 @@ public class Broker extends Thread {
             case "CREATETOPIC":
                 handleCreateTopic(input);
                 break;
+            case "GETTOPICS":
+                handleGetTopic();
+                processMessage(reader);
+                break;
             default:
                 LOGGER.warning("Message head didn't match any case. Ignoring message.");
                 this.sendMessage("Connection closed.");
                 handleLogout();
                 break;
         }
+    }
+
+    private void handleGetTopic() throws IOException {
+        // GETTOPICS
+        this.sendMessage(Mongo.getTopics());
     }
 
     /**

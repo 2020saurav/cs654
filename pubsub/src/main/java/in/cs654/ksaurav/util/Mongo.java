@@ -186,4 +186,11 @@ public class Mongo {
                     new Document("$pull", new Document("subs", new Document("subId", getIdFromEmail(email)))));
         }
     }
+
+    public static String getTopics() {
+        final List<String> topicList = new ArrayList<>();
+        topics.find().forEach((Block<Document>) document ->
+                topicList.add(document.get("topicId").toString() + " - " + document.get("topicName")));
+        return String.join("\n", topicList);
+    }
 }
