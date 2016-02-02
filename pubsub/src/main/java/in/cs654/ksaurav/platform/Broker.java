@@ -41,7 +41,6 @@ public class Broker extends Thread {
             processMessage(reader);
         } catch (Exception e) {
             LOGGER.severe("Error in processing message: " + e.toString());
-            e.printStackTrace();
         } finally {
             try {
                 socket.close();

@@ -50,8 +50,7 @@ public class Subscriber {
                         writer.println(input);
                         writer.flush();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (IOException ignored) {
                 }
             }
         }).start();
