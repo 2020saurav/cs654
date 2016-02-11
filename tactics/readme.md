@@ -11,15 +11,15 @@ dead. Slave servers are deployed using docker containers and listener is on the 
 in a docker container, in that case, please change following run command (for master) accordingly.
 
 ### Running Instructions
-    * To deploy slaves
-    ```bash
-    docker run -ti -v /path/to/ping-echo:/ping-echo ubuntu python3 /ping-echo/slave.py
-    ```
-    Accordingly edit config.py with correct IP addresses of the slaves.
-    * To run master
-    ```bash
-    python3 /path/to/ping-echo/master.py
-    ```
+To deploy slaves
+```bash
+docker run -ti -v /path/to/ping-echo:/ping-echo ubuntu python3 /ping-echo/slave.py
+```
+Accordingly edit config.py with correct IP addresses of the slaves.
+To run master
+```bash
+python3 /path/to/ping-echo/master.py
+```
 
 ## HEARTBEAT
 A listener (master) server has a list of servers which keep sending heartbeats at regular intervals to the master.
@@ -27,11 +27,11 @@ For implementation, I have used twice the sleeptime to be the time interval befo
 Deployment of slave and master is exactly similar as above PING-ECHO.
 
 ### Running Instructions
-    * To deploy slaves
-    ```bash
-    docker run -ti -v /path/to/heartbeat:/heartbeat ubuntu python3 /heartbeat/slave.py
-    ```
-    * To run master
-    ```bash
-    python3 /path/to/heartbeat/master.py
-    ```
+To deploy slaves
+```bash
+docker run -ti -v /path/to/heartbeat:/heartbeat ubuntu python3 /heartbeat/slave.py
+```
+To run master
+```bash
+python3 /path/to/heartbeat/master.py
+```
