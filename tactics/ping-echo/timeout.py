@@ -1,4 +1,4 @@
-# Acknowledgment : David Narayan
+# Acknowledgement : David Narayan
 # Source : http://stackoverflow.com/questions/2281850
 
 from functools import wraps
