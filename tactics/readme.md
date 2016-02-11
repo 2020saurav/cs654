@@ -12,12 +12,12 @@ in a docker container, in that case, please change following run command (for ma
 
 ### Running Instructions
     * To deploy slaves
-    ```sh
+    ```bash
     docker run -ti -v /path/to/ping-echo:/ping-echo ubuntu python3 /ping-echo/slave.py
     ```
     Accordingly edit config.py with correct IP addresses of the slaves.
     * To run master
-    ```sh
+    ```bash
     python3 /path/to/ping-echo/master.py
     ```
 
@@ -28,10 +28,10 @@ Deployment of slave and master is exactly similar as above PING-ECHO.
 
 ### Running Instructions
     * To deploy slaves
-    ```sh
+    ```bash
     docker run -ti -v /path/to/heartbeat:/heartbeat ubuntu python3 /heartbeat/slave.py
     ```
     * To run master
-    ```sh
+    ```bash
     python3 /path/to/heartbeat/master.py
     ```
